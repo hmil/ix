@@ -45,6 +45,7 @@
 #include <ix/control_plane.h>
 #include <ix/log.h>
 #include <ix/drivers.h>
+#include <ix/nvmedev.h>
 
 #include <net/ip.h>
 
@@ -96,6 +97,7 @@ static struct init_vector_t init_tbl[] = {
 	{ "memp",    memp_init,    memp_init_cpu, NULL},
 	{ "tcpapi",  tcp_api_init, tcp_api_init_cpu, NULL},
 	{ "ethdev",  init_ethdev,  NULL, NULL},
+	{ "nvmedev",  init_nvmedev, NULL, NULL},
 	{ "migration", NULL, init_migration_cpu, NULL},
 	{ "hw",      init_hw,      NULL, NULL},               // spaws per-cpu init sequence
 	{ "syscall", NULL,         syscall_init_cpu, NULL},

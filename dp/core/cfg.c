@@ -50,6 +50,17 @@
 
 #define DEFAULT_CONF_FILE "./ix.conf"
 
+// Config parameters
+#define CFG_ARP            "arp"
+#define CFG_BATCH          "batch"
+#define CFG_CPU            "cpu"
+#define CFG_ETH_DEVICES    "eth_devices"
+#define CFG_GATEWAY_ADDR   "gateway_addr"
+#define CFG_HOST_ADDR      "host_addr"
+#define CFG_LOADER_PATH    "loader_path"
+#define CFG_NVME_DEVICES   "nvme_devices"
+#define CFG_PORT           "port"
+
 struct cfg_parameters CFG;
 
 extern int net_cfg(void);
@@ -62,7 +73,8 @@ static int parse_host_addr(void);
 static int parse_port(void);
 static int parse_gateway_addr(void);
 static int parse_arp(void);
-static int parse_devices(void);
+static int parse_eth_devices(void);
+static int parse_nvme_devices(void);
 static int parse_cpu(void);
 static int parse_batch(void);
 static int parse_loader_path(void);
@@ -73,15 +85,16 @@ struct config_vector_t {
 };
 
 static struct config_vector_t config_tbl[] = {
-	{ "host_addr",    parse_host_addr},
-	{ "port",         parse_port},
-	{ "gateway_addr", parse_gateway_addr},
-	{ "arp",          parse_arp},
-	{ "devices",      parse_devices},
-	{ "cpu",          parse_cpu},
-	{ "batch",        parse_batch},
-	{ "loader_path",  parse_loader_path},
-	{ NULL,           NULL}
+	{ CFG_HOST_ADDR,    parse_host_addr},
+	{ CFG_PORT,         parse_port},
+	{ CFG_GATEWAY_ADDR,   parse_gateway_addr},
+	{ CFG_ARP,            parse_arp},
+	{ CFG_ETH_DEVICES,  parse_eth_devices},
+	{ CFG_NVME_DEVICES, parse_nvme_devices},
+	{ CFG_CPU,            parse_cpu},
+	{ CFG_BATCH,          parse_batch},
+	{ CFG_LOADER_PATH,    parse_loader_path},
+	{ NULL,             NULL}
 };
 
 /**
@@ -126,7 +139,7 @@ static int parse_arp(void)
 	const config_setting_t *arp = NULL, *entry = NULL;
 	int i, ret;
 
-	arp = config_lookup(&cfg, "arp");
+	arp = config_lookup(&cfg, CFG_ARP);
 	if (!arp) {
 		log_info("no static arp entries defined in config\n");
 		return 0;
@@ -157,7 +170,7 @@ static int parse_gateway_addr(void)
 {
 	char *parsed = NULL;
 
-	config_lookup_string(&cfg, "gateway_addr", (const char **)&parsed);
+	config_lookup_string(&cfg, CFG_GATEWAY_ADDR, (const char **)&parsed);
 	if (!parsed)
 		return -EINVAL;
 	if (str_to_ip_addr(parsed, (void *)&CFG.gateway_addr))
@@ -179,7 +192,7 @@ static int parse_port(void)
 	const config_setting_t *ports = NULL;
 	int port, ret;
 
-	ports = config_lookup(&cfg, "port");
+	ports = config_lookup(&cfg, CFG_PORT);
 	if (!ports)
 		return -EINVAL;
 	port = config_setting_get_int(ports);
@@ -200,7 +213,7 @@ static int parse_host_addr(void)
 {
 	char *parsed = NULL, *ip = NULL, *bitmask = NULL;
 
-	config_lookup_string(&cfg, "host_addr", (const char **)&parsed);
+	config_lookup_string(&cfg, CFG_HOST_ADDR, (const char **)&parsed);
 	if (!parsed)
 		return -EINVAL;
 	/* IP */
@@ -219,7 +232,7 @@ static int parse_host_addr(void)
 	return 0;
 }
 
-static int add_dev(const char *dev)
+static int add_eth_dev(const char *dev)
 {
 	int ret, i;
 	struct pci_addr addr;
@@ -239,22 +252,67 @@ static int add_dev(const char *dev)
 	return 0;
 }
 
-static int parse_devices(void)
+static int parse_eth_devices(void)
 {
 	const config_setting_t *devs = NULL;
 	const char *dev = NULL;
 	int i, ret;
 
-	devs = config_lookup(&cfg, "devices");
+	devs = config_lookup(&cfg, CFG_ETH_DEVICES);
 	if (!devs)
 		return -EINVAL;
 	dev = config_setting_get_string(devs);
 	if (dev)
-		return add_dev(dev);
+		return add_eth_dev(dev);
 	for (i = 0; i < config_setting_length(devs); ++i) {
 		dev = NULL;
 		dev = config_setting_get_string_elem(devs, i);
-		ret = add_dev(dev);
+		ret = add_eth_dev(dev);
+		if (ret)
+			return ret;
+	}
+	return 0;
+}
+
+static int add_nvme_dev(const char *dev)
+{
+	int ret, i;
+	struct pci_addr addr;
+
+	ret = pci_str_to_addr(dev, &addr);
+	if (ret) {
+		log_err("cfg: invalid device name %s\n", dev);
+		return ret;
+	}
+	for (i = 0; i < CFG.num_nvmedev; ++i) {
+		if (!memcmp(&CFG.nvmedev[i], &addr, sizeof(struct pci_addr)))
+			return 0;
+	}
+	if (CFG.num_nvmedev >= CFG_MAX_NVMEDEV)
+		return -E2BIG;
+	CFG.nvmedev[CFG.num_nvmedev++] = addr;
+	return 0;
+}
+
+/*
+ * TODO: maybe factor-out duplicate code with parse_eth_device
+ */
+static int parse_nvme_devices(void)
+{
+	const config_setting_t *devs = NULL;
+	const char *dev = NULL;
+	int i, ret;
+
+	devs = config_lookup(&cfg, CFG_NVME_DEVICES);
+	if (!devs)
+		return -EINVAL;
+	dev = config_setting_get_string(devs);
+	if (dev)
+		return add_nvme_dev(dev);
+	for (i = 0; i < config_setting_length(devs); ++i) {
+		dev = NULL;
+		dev = config_setting_get_string_elem(devs, i);
+		ret = add_nvme_dev(dev);
 		if (ret)
 			return ret;
 	}
@@ -285,7 +343,7 @@ static int parse_cpu(void)
 	int i, ret, cpu = -1;
 	config_setting_t *cpus = NULL;
 
-	cpus = config_lookup(&cfg, "cpu");
+	cpus = config_lookup(&cfg, CFG_CPU);
 	if (!cpus) {
 		return -EINVAL;
 	}
@@ -306,7 +364,7 @@ static int parse_cpu(void)
 static int parse_batch(void)
 {
 	int batch = -1;
-	config_lookup_int(&cfg, "batch", &batch);
+	config_lookup_int(&cfg, CFG_BATCH, &batch);
 	if (!batch || batch <= 0) {
 		return -EINVAL;
 	}
@@ -318,7 +376,7 @@ static int parse_loader_path(void)
 {
 	char *parsed = NULL;
 
-	config_lookup_string(&cfg, "loader_path", (const char **)&parsed);
+	config_lookup_string(&cfg, CFG_LOADER_PATH, (const char **)&parsed);
 	if (!parsed)
 		return -EINVAL;
 	strncpy(CFG.loader_path, parsed, sizeof(CFG.loader_path));

@@ -25,14 +25,19 @@ port=1234
 # Hardware parameters
 ###############################################################################
 
-## devices : Specifies the PCI device ID of the adapter to bind IX with.
+## xxx_devices : Specifies the PCI device ID of the adapter to bind IX with.
+##   eth:
 ##      Should be an Intel compatible NIC (e.g. 82599, X520, X540, etc)..
 ##      See the Docs to see which adapters are currently supported.
+##   nvme:
+##      Work in progress
+##
 ##      Format is a list dddd:bb:ss.ff,... d - domain, b = bus,
 ##      s = slot, f = function. Usually, `lspci | grep Ethernet` allows to see
 ##      available Ethernet controllers.
 ##      You can specify multiple entries, e.g. 'devices=["X","Y","Z"]'
-devices="0:05:00.0"
+eth_devices="0:05:00.0"
+nvme_devices="0:04:00.0"
 
 ## cpu : Indicates which CPU process unit(s) (P) this IX instance
 ##      should be bound to.
