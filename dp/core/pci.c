@@ -1,4 +1,35 @@
 /*
+ * Copyright (c) 2015-2017, Stanford University
+ *  
+ * All rights reserved.
+ * 
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are met:
+ * 
+ *  * Redistributions of source code must retain the above copyright notice, 
+ *    this list of conditions and the following disclaimer.
+ * 
+ *  * Redistributions in binary form must reproduce the above copyright notice,
+ *    this list of conditions and the following disclaimer in the documentation
+ *    and/or other materials provided with the distribution.
+ * 
+ *  * Neither the name of the copyright holder nor the names of its
+ *    contributors may be used to endorse or promote products derived from
+ *    this software without specific prior written permission.
+ * 
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+ * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+ * DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+ * SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+ * CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+ * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+ * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+
+/*
  * Copyright 2013-16 Board of Trustees of Stanford University
  * Copyright 2013-16 Ecole Polytechnique Federale Lausanne (EPFL)
  *
@@ -20,6 +51,7 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
+
 
 /*
  * pci.c - support for Linux user-level PCI access
@@ -50,6 +82,7 @@
 #include <dune.h>
 
 #define PCI_SYSFS_PATH "/sys/bus/pci/devices"
+#define PCI_PROCFS_PATH "/proc/bus/pci"
 
 static int pcidma_fd;
 
@@ -414,4 +447,69 @@ int pci_set_master(struct pci_dev *dev)
 	args.pci_loc.func = dev->addr.func;
 
 	return ioctl(pcidma_fd, PCIDMA_ENABLE, &args);
+}
+
+/**
+ * pci_device_cfg_read_u32 - reads 32 bit from the pci config space
+ * @handle: the device to read from
+ * @var: the output buffer
+ * @offset: offset within pci config space
+ */
+int ix_pci_device_cfg_read_u32(struct pci_dev* handle, uint32_t* var, uint32_t offset)
+{
+	FILE *f;
+	char file_path[PATH_MAX];
+	//      char buf[BUFSIZ];
+	struct pci_addr *addr = &(handle->addr);
+	
+	char dir_path[PATH_MAX];
+	snprintf(dir_path, PATH_MAX, "%s/%04x:%02x:%02x.%d", PCI_SYSFS_PATH,
+		 addr->domain, addr->bus, addr->slot, addr->func);
+
+	snprintf(file_path, sizeof(file_path), "%s/config", dir_path);
+	
+	f = fopen(file_path, "r");
+
+	if (f == NULL)
+		return -EIO;
+	if(fseek(f, offset, SEEK_SET))
+		return -EIO;
+	
+	if(fread(var, sizeof(int), 1, f) != 1)
+		return -EIO;
+	
+	fclose(f);
+	return 0;
+}
+
+/**
+ * pci_device_cfg_write_u32 - writes 32 bit to the pci config space
+ * @handle: the device to write to
+ * @var: the input
+ * @offset: offset within pci config space
+ */
+int ix_pci_device_cfg_write_u32(struct pci_dev* handle, uint32_t var, uint32_t offset)
+{
+	FILE *f;
+	char file_path[PATH_MAX];
+	//      char buf[BUFSIZ];
+	struct pci_addr *addr = &(handle->addr);
+	int ret;
+
+	char dir_path[PATH_MAX];
+	snprintf(dir_path, PATH_MAX, "%s/%04x:%02x:%02x.%d", PCI_SYSFS_PATH,
+		 addr->domain, addr->bus, addr->slot, addr->func);
+
+	snprintf(file_path, sizeof(file_path), "%s/config", dir_path);
+	f = fopen(file_path, "w");
+
+	if (f == NULL)
+		return -EIO;
+	if((ret = fseek(f, offset, SEEK_SET)))
+		return ret;
+
+	if((ret = fwrite(&var, sizeof(int), 1, f))!=1)
+		return ret;
+	fclose(f);
+	return 0;
 }

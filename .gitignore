@@ -4,6 +4,7 @@
 *.o
 .depend
 
+/deps/spdk
 /deps/dpdk
 /deps/dune
 /deps/pcidma

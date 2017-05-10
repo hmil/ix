@@ -93,7 +93,7 @@ static inline void *__percpu_get(void *key)
 
 static inline unsigned int __cpu_next_active(unsigned int cpu)
 {
-	while (cpu < cpu_count) {
+	while (cpu < (unsigned)cpu_count) {
 		cpu++;
 
 		if (cpu_is_active(cpu))

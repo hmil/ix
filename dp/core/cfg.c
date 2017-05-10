@@ -304,8 +304,10 @@ static int parse_nvme_devices(void)
 	int i, ret;
 
 	devs = config_lookup(&cfg, CFG_NVME_DEVICES);
-	if (!devs)
-		return -EINVAL;
+	if (!devs) {
+		log_warn("No NVME device specified, nvme features will not be available\n");
+		return 0;
+	}
 	dev = config_setting_get_string(devs);
 	if (dev)
 		return add_nvme_dev(dev);
