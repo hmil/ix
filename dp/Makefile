@@ -73,7 +73,9 @@ endif
 DPDK_LIBS=
 DPDK_LIBS+=-Wl,-whole-archive $(DPDK)/build/lib/librte_pmd_ixgbe.a -Wl,-no-whole-archive
 DPDK_LIBS+=-Wl,-whole-archive $(DPDK)/build/lib/librte_pmd_i40e.a -Wl,-no-whole-archive
-DPDK_LIBS+=$(DPDK)/build/lib/libethdev.a
+DPDK_LIBS+=$(DPDK)/build/lib/librte_ethdev.a
+DPDK_LIBS+=$(DPDK)/build/lib/librte_hash.a
+DPDK_LIBS+=$(DPDK)/build/lib/librte_kvargs.a
 DPDK_LIBS+=$(DPDK)/build/lib/librte_mbuf.a
 DPDK_LIBS+=$(DPDK)/build/lib/librte_eal.a
 DPDK_LIBS+=$(DPDK)/build/lib/librte_mempool.a

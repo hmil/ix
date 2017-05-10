@@ -118,10 +118,10 @@ static int rte_eal_pci_probe_one_driver(struct rte_pci_driver *dr, struct rte_pc
 
 		RTE_LOG(DEBUG, EAL, "PCI device "PCI_PRI_FMT" on NUMA socket %i\n",
 			loc->domain, loc->bus, loc->devid, loc->function,
-			dev->numa_node);
+			dev->device.numa_node);
 
 		RTE_LOG(DEBUG, EAL, "  probe driver: %x:%x %s\n", dev->id.vendor_id,
-			dev->id.device_id, dr->name);
+			dev->id.device_id, dr->driver.name);
 
 		/* reference driver structure */
 		dev->driver = dr;
@@ -133,8 +133,8 @@ static int rte_eal_pci_probe_one_driver(struct rte_pci_driver *dr, struct rte_pc
 		dev->intr_handle.fd = pipefd[1];
 		dev->intr_handle.type = RTE_INTR_HANDLE_UIO;
 
-		/* call the driver devinit() function */
-		return dr->devinit(dr, dev);
+		/* call the driver probe() function */
+		return dr->probe(dr, dev);
 	}
 	/* return positive value if driver is not found */
 	return 1;
@@ -308,7 +308,7 @@ int driver_init(struct pci_dev *pci_dev, struct ix_rte_eth_dev **ethp)
 		return ret;
 
 	for (dpdk_drv = drv_init_tbl; dpdk_drv->name != NULL; dpdk_drv++) {
-		if (strcmp(driver->name, dpdk_drv->name))
+		if (strcmp(driver->driver.name, dpdk_drv->name))
 			continue;
 		ret = dpdk_drv->init_fn(dev, dpdk_drv->name);
 		if (ret < 0)

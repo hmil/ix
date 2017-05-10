@@ -61,20 +61,23 @@
 #define check_types_match(expr1, expr2)         \
 	((typeof(expr1) *)0 != (typeof(expr2) *)0)
 
-/**
- * container_of - get pointer to enclosing structure
- * @member_ptr: pointer to the structure member
- * @containing_type: the type this member is within
- * @member: the name of this member within the structure.
- *
- * Given a pointer to a member of a structure, this macro does pointer
- * subtraction to return the pointer to the enclosing type.
- */
-#define container_of(member_ptr, containing_type, member)               \
-	((containing_type *)                                            \
-	 ((char *)(member_ptr)                                          \
-	  - offsetof(containing_type, member))                          \
-	  + check_types_match(*(member_ptr), ((containing_type *)0)->member))
+
+#ifndef container_of
+	/**
+	* container_of - get pointer to enclosing structure
+	* @member_ptr: pointer to the structure member
+	* @containing_type: the type this member is within
+	* @member: the name of this member within the structure.
+	*
+	* Given a pointer to a member of a structure, this macro does pointer
+	* subtraction to return the pointer to the enclosing type.
+	*/
+	#define container_of(member_ptr, containing_type, member)               \
+		((containing_type *)                                            \
+		((char *)(member_ptr)                                          \
+		- offsetof(containing_type, member))                          \
+		+ check_types_match(*(member_ptr), ((containing_type *)0)->member))
+#endif
 
 /**
  * container_of_var - get pointer to enclosing structure using a variable
