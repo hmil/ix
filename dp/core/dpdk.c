@@ -63,15 +63,19 @@ int dpdk_init()
 	if (ret < 0)
 		return ret;
 
-	// dpdk_pool = rte_pktmbuf_pool_create("mempool", pool_size, pool_cache_size, 0, pool_buffer_size, rte_socket_id());
-	struct rte_pktmbuf_pool_private mbp_priv;
-	unsigned elt_size;
+	for (unsigned int i = 0; i < rte_mempool_ops_table.num_ops; i++) {
+		puts(rte_mempool_ops_table.ops[i].name);
+	}
 
-	elt_size = sizeof(struct rte_mbuf) + 0 /* priv_size */ + (unsigned)pool_buffer_size;
-	mbp_priv.mbuf_data_room_size = pool_buffer_size;
-	mbp_priv.mbuf_priv_size = 0;
+	dpdk_pool = rte_pktmbuf_pool_create("mempool", pool_size, pool_cache_size, 0, pool_buffer_size, rte_socket_id());
+	// struct rte_pktmbuf_pool_private mbp_priv;
+	// unsigned elt_size;
 
-	dpdk_pool = rte_mempool_create("mempool", pool_size, elt_size, pool_cache_size, sizeof(struct rte_pktmbuf_pool_private), rte_pktmbuf_pool_init, &mbp_priv, rte_pktmbuf_init, NULL, rte_socket_id(), 0);
+	// elt_size = sizeof(struct rte_mbuf) + 0 /* priv_size */ + (unsigned)pool_buffer_size;
+	// mbp_priv.mbuf_data_room_size = pool_buffer_size;
+	// mbp_priv.mbuf_priv_size = 0;
+
+	// dpdk_pool = rte_mempool_create("mempool", pool_size, elt_size, pool_cache_size, sizeof(struct rte_pktmbuf_pool_private), rte_pktmbuf_pool_init, ???, rte_pktmbuf_init, NULL, rte_socket_id(), 0);
 	if (dpdk_pool == NULL)
 		panic("Cannot create DPDK pool, cause: %s\n", rte_strerror(rte_errno));
 
