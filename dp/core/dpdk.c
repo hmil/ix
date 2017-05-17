@@ -47,25 +47,26 @@ enum {
 	DEV_ATTACHED
 };
 
-int dpdk_init(void)
+int dpdk_init(int argc, char **argv)
 {
 	int ret;
 	/* -m stands for memory in MBs that DPDK will allocate. Must be enough
 	 * to accommodate the pool_size defined below. */
-	char *argv[] = { "./ix", "-m", "148" };
+	//char *argv[] = { "./ix", "-m", "148" };
 	const int pool_buffer_size = 0;
 	const int pool_cache_size = 0;
 	/* pool_size sets an implicit limit on cores * NICs that DPDK allows */
 	const int pool_size = 32768;
 
 	optind = 0;
-	ret = rte_eal_init(sizeof(argv) / sizeof(argv[0]), argv);
+	// ret = rte_eal_init(sizeof(argv) / sizeof(argv[0]), argv);
+	ret = rte_eal_init(argc, argv);
 	if (ret < 0)
 		return ret;
 
 	dpdk_pool = rte_pktmbuf_pool_create("mempool", pool_size, pool_cache_size, 0, pool_buffer_size, rte_socket_id());
 	if (dpdk_pool == NULL)
-		panic("Cannot create DPDK pool\n");
+		panic("Cannot create DPDK pool, cause %s\n", rte_strerror(rte_errno));
 
 	return 0;
 }
