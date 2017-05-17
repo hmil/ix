@@ -31,6 +31,7 @@ There is currently no binary distribution of IX. You will therefore have to comp
    make -sj64 -C deps/dune
    make -sj64 -C deps/pcidma
    make -sj64 -C deps/dpdk config T=x86_64-native-linuxapp-gcc
+   sed -i 's/CONFIG_RTE_LIBRTE_KNI=y/CONFIG_RTE_LIBRTE_KNI=n/g;s/CONFIG_RTE_KNI_KMOD=y/CONFIG_RTE_KNI_KMOD=n/g' deps/dpdk/build/.config
    make -sj64 -C deps/dpdk
 
    ```
