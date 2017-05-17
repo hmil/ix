@@ -57,7 +57,6 @@
 #define ENERGY_UNIT_OFFSET 0x08
 
 static int init_dune(void);
-static int init_dpdk(void);
 static int init_cfg(void);
 static int init_firstcpu(void);
 static int init_hw(void);
@@ -73,7 +72,7 @@ extern void tcp_init(struct eth_fg *);
 extern int cp_init(void);
 extern int mempool_init(void);
 extern int init_migration_cpu(void);
-extern int dpdk_init(int argc, char **argv);
+extern int dpdk_init(void);
 
 
 struct init_vector_t {
@@ -91,7 +90,7 @@ static struct init_vector_t init_tbl[] = {
 	{ "net",     net_init,     NULL, NULL},
 	{ "cfg",     init_cfg,     NULL, NULL},              // after net
 	{ "cp",      cp_init,      NULL, NULL},
-	{ "dpdk",    init_dpdk,    NULL, NULL},
+	{ "dpdk",    dpdk_init,    NULL, NULL},
 	{ "firstcpu", init_firstcpu, NULL, NULL},             // after cfg
 	{ "mbuf",    mbuf_init,    mbuf_init_cpu, NULL},      // after firstcpu
 	{ "memp",    memp_init,    memp_init_cpu, NULL},
@@ -467,11 +466,6 @@ static int init_dune(void)
 		return ret;
 	dune_register_pgflt_handler(pgflt_handler);
 	return ret;
-}
-
-static int init_dpdk(void)
-{
-	return dpdk_init(init_argc, init_argv);
 }
 
 static int init_cfg(void)

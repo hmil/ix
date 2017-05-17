@@ -47,24 +47,31 @@ enum {
 	DEV_ATTACHED
 };
 
-int dpdk_init(int argc, char **argv)
+int dpdk_init()
 {
 	int ret;
 	/* -m stands for memory in MBs that DPDK will allocate. Must be enough
 	 * to accommodate the pool_size defined below. */
-	//char *argv[] = { "./ix", "-m", "148" };
+	char *argv[] = { "./ix", "-m", "148" };
 	const int pool_buffer_size = 0;
 	const int pool_cache_size = 0;
 	/* pool_size sets an implicit limit on cores * NICs that DPDK allows */
 	const int pool_size = 32768;
 
 	optind = 0;
-	// ret = rte_eal_init(sizeof(argv) / sizeof(argv[0]), argv);
-	ret = rte_eal_init(argc, argv);
+	ret = rte_eal_init(sizeof(argv) / sizeof(argv[0]), argv);
 	if (ret < 0)
 		return ret;
 
-	dpdk_pool = rte_pktmbuf_pool_create("mempool", pool_size, pool_cache_size, 0, pool_buffer_size, rte_socket_id());
+	// dpdk_pool = rte_pktmbuf_pool_create("mempool", pool_size, pool_cache_size, 0, pool_buffer_size, rte_socket_id());
+	struct rte_pktmbuf_pool_private mbp_priv;
+	unsigned elt_size;
+
+	elt_size = sizeof(struct rte_mbuf) + 0 /* priv_size */ + (unsigned)pool_buffer_size;
+	mbp_priv.mbuf_data_room_size = pool_buffer_size;
+	mbp_priv.mbuf_priv_size = 0;
+
+	dpdk_pool = rte_mempool_create("mempool", pool_size, elt_size, pool_cache_size, sizeof(struct rte_pktmbuf_pool_private), rte_pktmbuf_pool_init, &mbp_priv, rte_pktmbuf_init, NULL, rte_socket_id(), 0);
 	if (dpdk_pool == NULL)
 		panic("Cannot create DPDK pool, cause: %s\n", rte_strerror(rte_errno));
 
