@@ -76,10 +76,10 @@ DPDK_LIBS+=-Wl,-whole-archive $(DPDK)/build/lib/librte_pmd_i40e.a -Wl,-no-whole-
 DPDK_LIBS+=$(DPDK)/build/lib/librte_ethdev.a
 DPDK_LIBS+=$(DPDK)/build/lib/librte_hash.a
 DPDK_LIBS+=$(DPDK)/build/lib/librte_kvargs.a
+DPDK_LIBS+=$(DPDK)/build/lib/librte_ring.a
 DPDK_LIBS+=$(DPDK)/build/lib/librte_mbuf.a
 DPDK_LIBS+=$(DPDK)/build/lib/librte_eal.a
 DPDK_LIBS+=$(DPDK)/build/lib/librte_mempool.a
-DPDK_LIBS+=$(DPDK)/build/lib/librte_ring.a
 
 ix: $(DEPENDENCY) $(OBJS) $(DUNE_LIB) ix.ld
 	$(LD) $(LDFLAGS) -o ix $(OBJS) $(DUNE_LIB) $(DPDK_LIBS) $(LDLIBS)

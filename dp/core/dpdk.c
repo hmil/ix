@@ -63,6 +63,7 @@ int dpdk_init()
 	if (ret < 0)
 		return ret;
 
+	printf("Num ops: %d\n", rte_mempool_ops_table.num_ops);
 	for (unsigned int i = 0; i < rte_mempool_ops_table.num_ops; i++) {
 		puts(rte_mempool_ops_table.ops[i].name);
 	}
