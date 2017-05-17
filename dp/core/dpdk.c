@@ -65,7 +65,7 @@ int dpdk_init(void)
 
 	dpdk_pool = rte_pktmbuf_pool_create("mempool", pool_size, pool_cache_size, 0, pool_buffer_size, rte_socket_id());
 	if (dpdk_pool == NULL)
-		panic("Cannot create DPDK pool\n");
+		panic("Cannot create DPDK pool, cause: %s\n", rte_strerror(rte_errno));
 
 	return 0;
 }
