@@ -33,6 +33,8 @@
 
 #define spdk_pci_device rte_pci_device
 
+static short device_found[CFG_MAX_NVMEDEV];
+
 struct nvme_request * alloc_local_nvme_request(struct nvme_request **req)
 {
 	log_err("Don't know what to do here \n");
@@ -60,6 +62,7 @@ probe_cb(void *cb_ctx, struct spdk_pci_device *dev, struct spdk_nvme_ctrlr_opts 
 				cfg_addr.bus == dev->addr.bus &&
 				cfg_addr.slot == dev->addr.devid &&
 				cfg_addr.func == dev->addr.function) {
+			device_found[i] = 1;
 			log_info("attaching to nvme device\n");
 			// As a first test, we want to see if we can get here
 			// return true;
@@ -107,23 +110,25 @@ attach_cb(void *cb_ctx, struct spdk_pci_device *dev, struct spdk_nvme_ctrlr *ctr
  */
 int init_nvmedev(void)
 {
-	int ret;
+	int ret = 0;
 	int i;
-	for (i = 0; i < CFG.num_nvmedev; i++) {
-		const struct pci_addr *addr = &CFG.nvmedev[i];
-		struct pci_dev *dev;
+	// for (i = 0; i < CFG.num_nvmedev; i++) {
+	// 	const struct pci_addr *addr = &CFG.nvmedev[i];
+	// 	struct pci_dev *dev;
 		// struct ix_rte_eth_dev *eth;
 
-		dev = pci_alloc_dev(addr);
-		if (!dev)
+		/*dev = pci_alloc_dev(addr);
+		if (!dev) {
+			log_err("init: failed to alloc PCI device\n");
 			return -ENOMEM;
+		}
 
 		ret = pci_enable_device(dev);
 		if (ret) {
 			log_err("init: failed to enable PCI device\n");
 			free(dev);
-			goto err;
-		}
+			return ret;
+		}*/
 
 
 		/* Don't know if we are going to need this
@@ -142,15 +147,23 @@ int init_nvmedev(void)
 			goto err;
 		}
 		*/
-	}
+	// }
 
+	memset(device_found, 0, sizeof(short) * CFG_MAX_NVMEDEV);
 	if (spdk_nvme_probe(NULL, probe_cb, attach_cb) != 0) {
 		log_info("spdk_nvme_probe() failed\n");
 		return 1;
 	}
 
-	return 0;
+	for (i = 0 ; i < CFG.num_nvmedev ; i++) {
+		const struct pci_addr *addr = &CFG.ethdev[i];
+		if (!device_found[i]) {
+			log_err("NVME device not found: %04x:%02x:%02x.%d\n", 
+				addr->domain, addr->bus, addr->slot, addr->func);
+			ret = 1;
+			continue;
+		}
+	}
 
-err:
 	return ret;
 }
