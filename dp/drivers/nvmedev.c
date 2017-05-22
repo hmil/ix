@@ -156,7 +156,7 @@ int init_nvmedev(void)
 	}
 
 	for (i = 0 ; i < CFG.num_nvmedev ; i++) {
-		const struct pci_addr *addr = &CFG.ethdev[i];
+		const struct pci_addr *addr = &CFG.nvmedev[i];
 		if (!device_found[i]) {
 			log_err("NVME device not found: %04x:%02x:%02x.%d\n", 
 				addr->domain, addr->bus, addr->slot, addr->func);

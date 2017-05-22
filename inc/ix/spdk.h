@@ -354,7 +354,7 @@ nvme_pci_enumerate(int (*enum_cb)(void *enum_ctx, struct spdk_pci_device *pci_de
 	nvme_enum_ctx.user_enum_cb = enum_cb;
 	nvme_enum_ctx.user_enum_ctx = enum_ctx;
 	
-	log_warn("FIXME: find out what this function should do");
+	log_warn("FIXME: find out what this function should do\n");
 	// log_info("pci enumerate dev %lx\n", g_nvme_dev);
 	// nvme_pci_enum_cb((void *)&nvme_enum_ctx, (struct spdk_pci_device *)g_nvme_dev); 
 //	int ret = spdk_pci_enumerate(nvme_pci_enum_cb, &nvme_enum_ctx);
